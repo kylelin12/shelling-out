@@ -15,8 +15,8 @@ by Kyle Lin
 
 ### Bugs:
 
-* `echo <STRING>` Where STRING is really long cuts off and ends the
-echo with an exclaimation mark.
+* <del>`echo <STRING>` Where STRING is really long cuts off and ends the
+echo with an exclaimation mark.</del> **FIXED**
 
 ### Files & Function Headers:
 
