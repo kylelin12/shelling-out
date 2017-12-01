@@ -4,19 +4,24 @@ by Kyle Lin
 
 ### Features:
 
-* Forks and executes commands
-* Parses multiple commands in one line
-* Exits
+* Forks children and executes commands from them
+* Parses multiple commands in one line seperated by a `;`
+* exit
+* cd
+* Signal handling
 
 ### Attempt(ed/ing):
 
 * Redirection using >, <
 * Piping using |
+* Handling `CTRL + Z` aka SIGTSTP signal
 
 ### Bugs:
 
 * <del>`echo <STRING>` Where STRING is really long cuts off and ends the
 echo with an exclaimation mark.</del> **FIXED**
+* Handling SIGTSTP doesn't work. After sending the SIGTSTP signal, program
+starts repeatedly sending ">" to stdout.
 
 ### Files & Function Headers:
 
