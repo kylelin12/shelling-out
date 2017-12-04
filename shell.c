@@ -2,8 +2,7 @@
 
 int main() {
 
-    signal(SIGINT, &sighandler);
-    signal(SIGTSTP, &sighandler);
+    signal(SIGINT, sighandler);
 
     while (1) {
         printf(">");

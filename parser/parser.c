@@ -1,6 +1,6 @@
 #include "parser.h"
 
-char **parseargs(char *line) {
+char **parseargs(char *line, char *dlim) {
     
     int linelen = strlen(line);
 
@@ -12,11 +12,11 @@ char **parseargs(char *line) {
     if (parsedargs) {
         int cmdcnt = 0;
 
-        while (linedupe != NULL) {
+        while (linedupe) {
             parsedargs[cmdcnt] = (char *)malloc(strlen(linedupe));
             /* strcpy is safe here because parsedargs[cmdcnt] will always be bigger than what the
                strsep() function returns here. */
-            strcpy(parsedargs[cmdcnt], strsep(&linedupe, " ")); 
+            strcpy(parsedargs[cmdcnt], strsep(&linedupe, dlim)); 
             cmdcnt++;
         }
     }

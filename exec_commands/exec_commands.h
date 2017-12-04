@@ -4,9 +4,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/wait.h>
+#include <ctype.h>
 
-int exec_commands(char **);
+#include "../parser/parser.h"
+
+int exec_commands(char *);
+char *snipsnip(char *);
+void exec_fork(char **);
+void exec_special(char *, int);
 
 int token_checker(char *);
 #endif

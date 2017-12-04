@@ -1,90 +1,136 @@
 #include "exec_commands.h"
 
-int exec_commands(char** parsedargs) {
-    char **cmds;
-    char **backcmds;
+int exec_commands(char *cmds) {
+    *strrchr(cmds, '\n') = 0;
+    char **parsedcmds = parseargs(cmds, ";");
+    char *cmd = *parsedcmds;
+    int n = 0;
+    while (cmd) {
+        if (token_checker(cmd)) {
+            exec_special(cmd, token_checker(cmd));
+        } else {
+            char **parsedargs = parseargs(cmds, " ");
+            exec_fork(parsedargs);
+            free(parsedargs);
+        }
+        cmd = parsedcmds[++n];
+    }
+    free(cmd);
+    free(cmds);
+}
 
-    int cmdslength, restofcmdslength;
-    for (cmdslength = 0; parsedargs[cmdslength]; cmdslength+=1){}
+char *snipsnip(char *car) {
+    char *end = car + strlen(car) - 1;
+    while (*car && isspace(*car)) {
+        car++;
+    }
+    while (end > car && isspace(*end)) {
+        *end-- = '\0';
+    }
+    return car;
+}
 
-    int i;
-    for (i = 0; parsedargs[i]; i++) {
-        int token_type = token_checker(parsedargs[i]);
-        // If the token is a ';'
-        if (token_type == 1) {
-            restofcmdslength = cmdslength - i - 1;
-            cmds = malloc(i * 8);
-            backcmds = malloc(restofcmdslength * 8);
-            memcpy(cmds, parsedargs, i * 8);
-            memcpy(backcmds, parsedargs + i + 1, restofcmdslength * 8);
-            if (fork() == 0) {
-                execvp(cmds[0], cmds);
-                exit(0);
-            } else {
-                wait(0);
-                printf("\n");
-                free(cmds);
-                exec_commands(backcmds);
+void exec_fork(char **parsedargs) {
+    if (!strcmp(parsedargs[0], "")) {
+        return;
+    }
+    if (!strcmp(parsedargs[0], "exit")) {
+        exit(0);
+    } else if (!strcmp(parsedargs[0], "cd")) {
+        if (parsedargs[1]) {
+            if (chdir(parsedargs[1])) {
+                printf("Could not cd into %s becuase reasons\n", parsedargs[1]);
             }
-            return 0;
-        } else if (token_type == 2) { // If the token is a '>'
-            restofcmdslength = cmdslength - i - 2;
-
-            int pipefd[2];
-            int pid;
-
-            cmds = malloc(i * 8);
-            memcpy(cmds, parsedargs, i);
-            memcpy(backcmds, parsedargs + i + 1, restofcmdslength * 8);
-
-            char **cmdsright;
-
-            i++;
-            restofcmdslength = cmdslength - i - 1;
-
-            cmdsright = malloc(i * 8);
-            memcpy(cmdsright, parsedargs, (i - 1) * 8);
-
-            pipe(pipefd);
-            pid = fork();
-            if (fork() == 0) {
-                dup2(pipefd[0], 0);
-                close(pipefd[1]);
-                execvp(cmdsright[0], cmdsright);
-            } else {
-                dup2(pipefd[1], 1);
-                close(pipefd[0]);
-                execvp(cmds[0], cmds);
-            }
-
-            free(cmds);
-            free(cmdsright);
-            return 0;
-        } else if (token_type == 3) { // If the token is a '<'
-            restofcmdslength = cmdslength - i - 1;
-            return 0;
-        } else if (token_type == 4) { // If the token is a  '|'
-            restofcmdslength = cmdslength - i - 1;
-            return 0;
+        } else {
+            chdir(parsedargs[1]);
+        }
+    } else {
+        int pid;
+        if (pid = fork()) {
+            waitpid(pid, NULL, 0);
+        } else {
+            execvp(parsedargs[0], parsedargs);
+            exit(0);
         }
     }
-
-    if (fork() == 0) {
-        execvp(parsedargs[0], parsedargs);
-        exit(0);
-    } else {
-        wait(0);
-    }
-
-    return 0;
 }
+
+void exec_special(char *parsedargs, int token) {
+    int n, c, b;
+    char *exec;
+    if (token == 2) {
+        exec = strsep(&parsedargs, ">");
+        if (token_checker(parsedargs)) {
+            parsedargs = snipsnip(parsedargs);
+            char backend[strlen(parsedargs)];
+            strncpy(backend, parsedargs, strlen(parsedargs));
+            char *this = strsep(&parsedargs, " ");
+            n = open(this, O_CREAT | O_WRONLY, 0644);
+            c = dup(STDOUT_FILENO);
+            b = dup2(n, STDOUT_FILENO);
+            exec_special(backend, token_checker(backend));
+            dup2(c, b);
+        } else {
+            n = open(snipsnip(parsedargs), O_CREAT | O_WRONLY, 0644);
+            c = dup(STDOUT_FILENO);
+            b = dup2(n, STDOUT_FILENO);
+            exec = snipsnip(exec);
+            char **todo = parseargs(exec, " ");
+            exec_fork(todo);
+            free(todo);
+            dup2(c, b);
+            close(n);
+        }
+    } else if (token == 3) {
+        exec = strsep(&parsedargs, "<");
+        if (token_checker(parsedargs)) {
+            parsedargs = snipsnip(parsedargs);
+            char backend[strlen(parsedargs)];
+            strncpy(backend, parsedargs, strlen(parsedargs));
+            char *this = strsep(&parsedargs, " ");
+            n = open(this, O_CREAT | O_WRONLY, 0644);
+            c = dup(STDIN_FILENO);
+            b = dup2(n, STDIN_FILENO);
+            exec_special(backend, token_checker(backend));
+            dup2(c, b);
+        } else {
+            n = open(snipsnip(parsedargs), O_CREAT | O_WRONLY, 0644);
+            c = dup(STDIN_FILENO);
+            b = dup2(n, STDIN_FILENO);
+            exec = snipsnip(exec);
+            char **todo = parseargs(exec, " ");
+            exec_fork(todo);
+            free(todo);
+            dup2(c, b);
+            close(n);
+        }
+    } else if (token == 4) {
+        char **newargs = parseargs(parsedargs, "|");
+        if (strcmp(newargs[1], "")) {
+            FILE *fp;
+            fp = popen(newargs[0], "r");
+            if(!fp) {
+                printf("Pipe went wrong\n");
+                return;
+            }
+            c = dup(STDIN_FILENO);
+            b = dup2(fileno(fp), STDIN_FILENO);
+            char **nparsedargs = parseargs(snipsnip(newargs[1]), " ");
+            exec_fork(nparsedargs);
+            dup2(c, b);
+            pclose(fp);
+            free(nparsedargs);
+            free(newargs);
+        }
+    }
+}
+
+
 
 // Checks if the token is a "special character"
 int token_checker(char *token) {
     if (strchr(token, ';')) return 1;
-    else if (strpbrk(token, ">>")) return 22;
     else if (strchr(token, '>')) return 2;
-    else if (strpbrk(token, "<<")) return 33;
     else if (strchr(token, '<')) return 3;
     else if (strchr(token, '|')) return 4;
     else return 0;

@@ -9,11 +9,11 @@ by Kyle Lin
 * exit
 * cd
 * Signal handling
+* Redirection using >, <
+* Piping using |
 
 ### Attempt(ed/ing):
 
-* Redirection using >, <
-* Piping using |
 * Handling `CTRL + Z` aka SIGTSTP signal
 
 ### Bugs:
@@ -22,6 +22,9 @@ by Kyle Lin
 echo with an exclaimation mark.</del> **FIXED**
 * Handling SIGTSTP doesn't work. After sending the SIGTSTP signal, program
 starts repeatedly sending ">" to stdout.
+* Randomly sends to STDOUT more than once
+* When creating or deleting files, the "No such file/directory" error is returned
+although the file is successfully added/removed.
 
 ### Files & Function Headers:
 

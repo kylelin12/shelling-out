@@ -10,8 +10,6 @@
 
 int bash_shell();
 
-void cnt_fork(char **);
-
 char *rd_line();
 
 void sighandler(int);
