@@ -22,22 +22,23 @@ by Kyle Lin
 echo with an exclaimation mark.</del> **FIXED**
 * Handling SIGTSTP doesn't work. After sending the SIGTSTP signal, program
 starts repeatedly sending ">" to stdout.
-* Randomly sends to STDOUT more than once
+* Randomly sends to STDOUT more than once because it forks more than once?
 * When creating or deleting files, the "No such file/directory" error is returned
 although the file is successfully added/removed.
+* Piping and using flags isn't compatible. Ex: `ps -aux | wc` won't work properly.
 
 ### Files & Function Headers:
 
-* parser.c : Parses the line
+* parser.c : Parses the line with the given delimiter
 ```
     /*======== char **parseargs() ==========
-    Inputs: char *line
+    Inputs: char *line, char *dlim
     Returns: Array of strings where each string is an argument of the command
 
     Dynamically allocates memory for a string array and for a copy of the input line.
 
-    Iterates through a copy of the input line and uses strsep to find the ` ` space
-    delimiter. The index by index, each returned pointer from strsep is places in
+    Iterates through a copy of the input line and uses strsep to find the delimiter. 
+    Then index by index, each returned pointer from strsep is places in
     consecutive indexes of the string array. 
 
     Returns the string array.
@@ -45,14 +46,45 @@ although the file is successfully added/removed.
 ```
 * exec_commands.c : Executes commands
 ```
-    /*======== int exec_commands() ==========
+    /*======== void exec_commands() ==========
+    Inputs: char *cmds
+    Returns: 
+
+    Takes an input string from rd_line and determines
+    whether to pass it to the exec_form() function or
+    the exec_special() function.
+    ====================*/
+
+    /*======== char *snipsnip() ==========
+    Inputs: char *car
+    Returns: char *
+
+    Removes whitespace from the beginning or end of a string.
+    ====================*/
+
+    /*======== void exec_fork() ==========
     Inputs: char **parsedargs
-    Returns: 0
+    Returns: void
 
-    Recursively goes through the input string array and executes commands based on
-    the detection of either `;`, `>`, `<`, or `|` in the array.
+    Executes hardcoded exceptions for exit and cd if they are detected.
+    Otherwise forks and allows the child to execute the command.
+    ====================*/
 
-    If nothing goes wrong, 0 is returned.
+    /*======== void exec_special() ==========
+    Inputs: char *parsedargs, int token
+    Returns: void
+
+    Takes a single command + its arguments and a token.
+    The token tells the function whether to execute the
+    ">", "<", or "|" path.
+    ====================*/
+
+    /*======== int token_checker() ==========
+    Inputs: char *token
+    Returns: int
+
+    Checks if the input character is ";", ">", "<", or "|"
+    and returns 1, 2, 3, 4 respectively.
     ====================*/
 ```
 * bash_shell.c : Reads from stdin and executes commands using exec_commands()
@@ -62,19 +94,8 @@ although the file is successfully added/removed.
     Returns: 0 
 
     Runs rd_line() to read a line from stdin.
-    Runs parseargs() to convert the line into a char **.
-    Executes exit and cd if those are inputted using cnt_fork().
-    Executes the non exit/cd commands using exec_commands().
+    Passes the char* from rd_line() into exec_commands().
     Returns 0 if nothing goes wrong.
-    ====================*/
-
-    /*======== void cnt_fork() ==========
-    Inputs: char **
-    Returns: void 
-
-    Exception function for the exit and cd commands.
-    If exit, exit(0).
-    If cd, chdir(<Next Argument>).
     ====================*/
 
     /*======== char *rd_line() ==========
@@ -83,7 +104,6 @@ although the file is successfully added/removed.
 
     Allocates memory to a char pointer.
     Uses fgets() to read from stdin to the char pointer.
-    Removes '\n' newlines.
     Returns the pointer.
     ====================*/
 
@@ -93,7 +113,7 @@ although the file is successfully added/removed.
 
     Takes an input int which is received from signal() in main().
     If SIGINT is the input, re-runs bash_shell() and clears the buffer.
-    If SIGSTSP is the input, sends a SIGSTOP signal to the process. **Broken**
+    If SIGSTSP is the input, sends a SIGSTOP signal to the process. **Broken and removed**
     ====================*/
 ```
 * shell.c : Main file to run. Contains loop to run bash_shell()
@@ -102,6 +122,8 @@ although the file is successfully added/removed.
     Inputs: 
     Returns: 0
 
+    Intercepts SIGINT and passes it to sighandler()
+    Continously runs the bash_shell()
     If nothing goes wrong, 0 is returned.
     ====================*/
 ```

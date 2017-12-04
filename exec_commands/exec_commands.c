@@ -1,11 +1,21 @@
 #include "exec_commands.h"
 
-int exec_commands(char *cmds) {
+/*======== void exec_commands() ==========
+    Inputs: char *cmds
+    Returns: 
+
+    Takes an input string from rd_line and determines
+    whether to pass it to the exec_form() function or
+    the exec_special() function.
+    ====================*/
+
+void exec_commands(char *cmds) {
     *strrchr(cmds, '\n') = 0;
     char **parsedcmds = parseargs(cmds, ";");
     char *cmd = *parsedcmds;
     int n = 0;
     while (cmd) {
+        cmd = snipsnip(cmd);
         if (token_checker(cmd)) {
             exec_special(cmd, token_checker(cmd));
         } else {
@@ -13,11 +23,17 @@ int exec_commands(char *cmds) {
             exec_fork(parsedargs);
             free(parsedargs);
         }
-        cmd = parsedcmds[++n];
+        cmd = parsedcmds[n++];
     }
-    free(cmd);
     free(cmds);
 }
+
+/*======== char *snipsnip() ==========
+    Inputs: char *car
+    Returns: char *
+
+    Removes whitespace from the beginning or end of a string.
+    ====================*/
 
 char *snipsnip(char *car) {
     char *end = car + strlen(car) - 1;
@@ -29,6 +45,14 @@ char *snipsnip(char *car) {
     }
     return car;
 }
+
+/*======== void exec_fork() ==========
+    Inputs: char **parsedargs
+    Returns: void
+
+    Executes hardcoded exceptions for exit and cd if they are detected.
+    Otherwise forks and allows the child to execute the command.
+    ====================*/
 
 void exec_fork(char **parsedargs) {
     if (!strcmp(parsedargs[0], "")) {
@@ -49,11 +73,21 @@ void exec_fork(char **parsedargs) {
         if (pid = fork()) {
             waitpid(pid, NULL, 0);
         } else {
+            printf("my pid: %d\n", getpid());
             execvp(parsedargs[0], parsedargs);
             exit(0);
         }
     }
 }
+
+/*======== void exec_special() ==========
+    Inputs: char *parsedargs, int token
+    Returns: void
+
+    Takes a single command + its arguments and a token.
+    The token tells the function whether to execute the
+    ">", "<", or "|" path.
+    ====================*/
 
 void exec_special(char *parsedargs, int token) {
     int n, c, b;
@@ -125,9 +159,14 @@ void exec_special(char *parsedargs, int token) {
     }
 }
 
+/*======== int token_checker() ==========
+    Inputs: char *token
+    Returns: int
 
-
-// Checks if the token is a "special character"
+    Checks if the input character is ";", ">", "<", or "|"
+    and returns 1, 2, 3, 4 respectively.
+    ====================*/
+    
 int token_checker(char *token) {
     if (strchr(token, ';')) return 1;
     else if (strchr(token, '>')) return 2;

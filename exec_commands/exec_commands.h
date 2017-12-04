@@ -10,7 +10,7 @@
 
 #include "../parser/parser.h"
 
-int exec_commands(char *);
+void exec_commands(char *);
 char *snipsnip(char *);
 void exec_fork(char **);
 void exec_special(char *, int);

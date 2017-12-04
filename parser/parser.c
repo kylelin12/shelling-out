@@ -1,5 +1,18 @@
 #include "parser.h"
 
+/*======== char **parseargs() ==========
+    Inputs: char *line, char *dlim
+    Returns: Array of strings where each string is an argument of the command
+
+    Dynamically allocates memory for a string array and for a copy of the input line.
+
+    Iterates through a copy of the input line and uses strsep to find the delimiter. 
+    Then index by index, each returned pointer from strsep is places in
+    consecutive indexes of the string array. 
+
+    Returns the string array.
+    ====================*/
+
 char **parseargs(char *line, char *dlim) {
     
     int linelen = strlen(line);
