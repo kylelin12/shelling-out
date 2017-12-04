@@ -25,6 +25,8 @@ starts repeatedly sending ">" to stdout.
 * Randomly sends to STDOUT more than once because it forks more than once?
 * When creating or deleting files, the "No such file/directory" error is returned
 although the file is successfully added/removed.
+* When changing directory, an error is given although the directory change
+is successful.
 * Piping and using flags isn't compatible. Ex: `ps -aux | wc` won't work properly.
 
 ### Files & Function Headers:
