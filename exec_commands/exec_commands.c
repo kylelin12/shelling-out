@@ -10,13 +10,13 @@
     ====================*/
 
 void exec_commands(char *cmds) {
-    *strrchr(cmds, '\n') = 0;
+    *strrchr(cmds, '\n') = 0; // Sets the last occurance of "\n" in cmds to 0.
     char **parsedcmds = parseargs(cmds, ";");
     char *cmd = *parsedcmds;
     int n = 0;
     while (cmd) {
-        cmd = snipsnip(cmd);
-        if (token_checker(cmd)) {
+        cmd = snipsnip(cmd); // Erases whitespace at the beginning and end
+        if (token_checker(cmd)) { // If a token is detected
             exec_special(cmd, token_checker(cmd));
         } else {
             char **parsedargs = parseargs(cmds, " ");
@@ -55,12 +55,9 @@ char *snipsnip(char *car) {
     ====================*/
 
 void exec_fork(char **parsedargs) {
-    if (!strcmp(parsedargs[0], "")) {
-        return;
-    }
-    if (!strcmp(parsedargs[0], "exit")) {
+    if (!strcmp(parsedargs[0], "exit")) { // exit
         exit(0);
-    } else if (!strcmp(parsedargs[0], "cd")) {
+    } else if (!strcmp(parsedargs[0], "cd")) { // cd
         if (parsedargs[1]) {
             if (chdir(parsedargs[1])) {
                 printf("Could not cd into %s becuase reasons\n", parsedargs[1]);
@@ -70,8 +67,9 @@ void exec_fork(char **parsedargs) {
         }
     } else {
         int pid;
-        if (pid = fork()) {
+        if (pid = fork()) { // Forks
             waitpid(pid, NULL, 0);
+            printf("\n");
         } else {
             printf("my pid: %d\n", getpid());
             execvp(parsedargs[0], parsedargs);
@@ -92,7 +90,7 @@ void exec_fork(char **parsedargs) {
 void exec_special(char *parsedargs, int token) {
     int n, c, b;
     char *exec;
-    if (token == 2) {
+    if (token == 2) { // If ">"
         exec = strsep(&parsedargs, ">");
         if (token_checker(parsedargs)) {
             parsedargs = snipsnip(parsedargs);
@@ -101,21 +99,22 @@ void exec_special(char *parsedargs, int token) {
             char *this = strsep(&parsedargs, " ");
             n = open(this, O_CREAT | O_WRONLY, 0644);
             c = dup(STDOUT_FILENO);
-            b = dup2(n, STDOUT_FILENO);
+            b = dup2(n, STDOUT_FILENO); // Swaps STDOUT with the right side of >
             exec_special(backend, token_checker(backend));
-            dup2(c, b);
+            dup2(c, b); // Resets file table
+            close(n);
         } else {
             n = open(snipsnip(parsedargs), O_CREAT | O_WRONLY, 0644);
             c = dup(STDOUT_FILENO);
-            b = dup2(n, STDOUT_FILENO);
+            b = dup2(n, STDOUT_FILENO); // Swaps STDOUT with the right side of >
             exec = snipsnip(exec);
-            char **todo = parseargs(exec, " ");
+            char **todo = parseargs(exec, " "); // todo = commands to run
             exec_fork(todo);
             free(todo);
-            dup2(c, b);
+            dup2(c, b); // Resets file table
             close(n);
         }
-    } else if (token == 3) {
+    } else if (token == 3) { // If "<"
         exec = strsep(&parsedargs, "<");
         if (token_checker(parsedargs)) {
             parsedargs = snipsnip(parsedargs);
@@ -124,21 +123,22 @@ void exec_special(char *parsedargs, int token) {
             char *this = strsep(&parsedargs, " ");
             n = open(this, O_CREAT | O_WRONLY, 0644);
             c = dup(STDIN_FILENO);
-            b = dup2(n, STDIN_FILENO);
+            b = dup2(n, STDIN_FILENO); // Swaps STDIN with the right side of <
             exec_special(backend, token_checker(backend));
-            dup2(c, b);
+            dup2(c, b); // Resets file table
+            close(n);
         } else {
             n = open(snipsnip(parsedargs), O_CREAT | O_WRONLY, 0644);
             c = dup(STDIN_FILENO);
-            b = dup2(n, STDIN_FILENO);
+            b = dup2(n, STDIN_FILENO); // Swwaps STDIN with the right side of <
             exec = snipsnip(exec);
             char **todo = parseargs(exec, " ");
             exec_fork(todo);
             free(todo);
-            dup2(c, b);
+            dup2(c, b); // Resets file table
             close(n);
         }
-    } else if (token == 4) {
+    } else if (token == 4) { // If "|"
         char **newargs = parseargs(parsedargs, "|");
         if (strcmp(newargs[1], "")) {
             FILE *fp;
@@ -148,10 +148,10 @@ void exec_special(char *parsedargs, int token) {
                 return;
             }
             c = dup(STDIN_FILENO);
-            b = dup2(fileno(fp), STDIN_FILENO);
+            b = dup2(fileno(fp), STDIN_FILENO); // Swaps STDIN with the descriptor of the file
             char **nparsedargs = parseargs(snipsnip(newargs[1]), " ");
             exec_fork(nparsedargs);
-            dup2(c, b);
+            dup2(c, b); // Resets the file table
             pclose(fp);
             free(nparsedargs);
             free(newargs);
@@ -166,11 +166,10 @@ void exec_special(char *parsedargs, int token) {
     Checks if the input character is ";", ">", "<", or "|"
     and returns 1, 2, 3, 4 respectively.
     ====================*/
-    
+
 int token_checker(char *token) {
     if (strchr(token, ';')) return 1;
     else if (strchr(token, '>')) return 2;
     else if (strchr(token, '<')) return 3;
     else if (strchr(token, '|')) return 4;
-    else return 0;
 }

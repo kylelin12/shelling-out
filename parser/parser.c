@@ -19,7 +19,7 @@ char **parseargs(char *line, char *dlim) {
 
     char **parsedargs = (char **)malloc(sizeof(char *) * 8);
 
-    char *linedupe = (char *)malloc(linelen);
+    char *linedupe = (char *)malloc(linelen); // Duplicates the line
     strncpy(linedupe, line, linelen);
     
     if (parsedargs) {
