@@ -16,14 +16,14 @@ void exec_commands(char *cmds) {
     int n = 0;
     while (cmd) {
         cmd = snipsnip(cmd); // Erases whitespace at the beginning and end
-        if (token_checker(cmd)) { // If a token is detected
+        if (token_checker(cmd) > 1) { // If a token is detected
             exec_special(cmd, token_checker(cmd));
         } else {
             char **parsedargs = parseargs(cmds, " ");
             exec_fork(parsedargs);
             free(parsedargs);
         }
-        cmd = parsedcmds[n++];
+        cmd = parsedcmds[++n];
     }
     free(cmds);
 }
@@ -69,9 +69,7 @@ void exec_fork(char **parsedargs) {
         int pid;
         if (pid = fork()) { // Forks
             waitpid(pid, NULL, 0);
-            printf("\n");
         } else {
-            printf("my pid: %d\n", getpid());
             execvp(parsedargs[0], parsedargs);
             exit(0);
         }
